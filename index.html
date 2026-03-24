@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f0f0f">
+<title>IRON LOG</title>
+<link rel="manifest" href="manifest.json">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+:root{--bg:#0f0f0f;--s1:#1a1a1a;--s2:#222;--bd:#2e2e2e;--ac:#e8ff47;--ac2:#ff6b35;--tx:#f0f0f0;--mu:#666;--gn:#5a9a5a}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:15px;min-height:100dvh}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 16px;height:56px}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--ac)}
+.page{display:none;padding:68px 16px 80px}
+.page.active{display:block}
+/* INPUTS */
+textarea{width:100%;background:var(--s1);border:1px solid var(--bd);border-radius:10px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;line-height:1.6;padding:14px;resize:none;height:200px;outline:none}
+textarea:focus{border-color:var(--ac)}
+.btn{display:block;width:100%;padding:14px;border-radius:10px;border:none;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;cursor:pointer;margin-top:10px}
+.btn-y{background:var(--ac);color:#000}
+.btn-y:active{background:#d4eb3a}
+/* PREVIEW */
+.preview{margin-top:16px;background:var(--s1);border-radius:10px;border:1px solid var(--bd);overflow:hidden;display:none}
+.preview-hd{padding:10px 14px;border-bottom:1px solid var(--bd);font-size:11px;font-weight:600;letter-spacing:1px;color:var(--mu);text-transform:uppercase}
+.prev-ex{padding:11px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}
+.prev-ex:last-child{border-bottom:none}
+.prev-n{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--ac);min-width:22px}
+.prev-name{font-weight:500;flex:1;font-size:14px}
+.prev-meta{font-size:11px;color:var(--mu);font-family:'DM Mono',monospace}
+/* WORKOUT */
+.wk-hd{margin-bottom:16px}
+.wk-title{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:1px;line-height:1.1}
+.wk-sub{color:var(--mu);font-size:12px;margin-top:4px}
+.prog-wrap{background:var(--s2);border-radius:4px;height:4px;margin-top:10px;overflow:hidden}
+.prog-bar{height:100%;background:var(--ac);border-radius:4px;transition:width .3s}
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.card.done{border-color:#2a3a1a;background:#131a0e}
+.card-hd{padding:13px 15px;display:flex;align-items:flex-start;gap:11px;cursor:pointer}
+.card-num{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--ac);min-width:26px}
+.card.done .card-num{color:#4a6a2a}
+.card-info{flex:1}
+.card-name{font-weight:600;font-size:15px}
+.card.done .card-name{color:#555}
+.card-meta{font-size:12px;color:var(--mu);margin-top:2px;font-family:'DM Mono',monospace}
+.card-sug{font-size:11px;color:var(--ac2);margin-top:3px;font-weight:500}
+.card-hist{font-size:11px;color:var(--gn);margin-top:2px}
+.chevron{color:var(--mu);font-size:18px;transition:transform .2s;padding-top:2px;flex-shrink:0}
+.card.open .chevron{transform:rotate(180deg)}
+.card-body{display:none;padding:0 15px 13px}
+.card.open .card-body{display:block}
+/* SETS TABLE */
+.stbl{width:100%;border-collapse:collapse;margin-bottom:8px}
+.stbl th{text-align:left;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mu);padding:0 0 7px;font-family:'DM Mono',monospace}
+.stbl th:last-child{text-align:center}
+.srow td{padding:4px 0;vertical-align:middle}
+.slbl{font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--mu);width:52px;white-space:nowrap}
+.srow.done .slbl{color:#4a6a2a}
+.starget{font-size:11px;color:var(--mu);font-family:'DM Mono',monospace;width:60px}
+.winput{background:var(--s2);border:1px solid var(--bd);border-radius:7px;color:var(--tx);font-family:'DM Mono',monospace;font-size:14px;padding:7px 8px;width:76px;outline:none;text-align:right}
+.winput:focus{border-color:var(--ac)}
+.wunit{font-size:11px;color:var(--mu);margin-left:3px}
+.chkcol{text-align:center;width:40px}
+.chk{width:27px;height:27px;border-radius:7px;border:2px solid var(--bd);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:all .15s}
+.chk.on{background:var(--ac);border-color:var(--ac)}
+.chk svg{display:none}
+.chk.on svg{display:block}
+.sec-lbl{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mu);padding:7px 0 3px;font-family:'DM Mono',monospace}
+.notes{background:var(--s2);border-radius:7px;padding:9px 11px;font-size:12px;color:var(--mu);line-height:1.5;margin-top:4px;border-left:3px solid var(--ac2)}
+/* WARMUP */
+.wu-hd{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mu);padding:10px 15px 6px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.wu-item{padding:7px 15px;font-size:13px;color:var(--mu);display:flex;align-items:center;gap:10px}
+.wu-chk{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--bd);background:none;cursor:pointer;flex-shrink:0}
+.wu-chk.on{background:var(--s2);border-color:#4a6a2a}
+/* FINISHERS */
+.fin-star{font-size:16px;min-width:26px;text-align:center}
+/* HISTORY */
+.hist-hd{margin-bottom:16px}
+.hist-hd h2{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;color:var(--ac)}
+.sess{background:var(--s1);border:1px solid var(--bd);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.sess-hd{padding:13px 15px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.sess-title{font-weight:600;font-size:14px}
+.sess-date{font-size:11px;color:var(--mu);font-family:'DM Mono',monospace;margin-top:2px}
+.sess-badge{background:var(--s2);border-radius:6px;padding:4px 9px;font-size:11px;font-family:'DM Mono',monospace;color:var(--mu)}
+.sess-body{display:none;padding:0 15px 13px}
+.sess.open .sess-body{display:block}
+.hex{padding:9px 0;border-top:1px solid var(--bd)}
+.hex-name{font-weight:500;font-size:13px;margin-bottom:5px}
+.hsets{display:flex;flex-wrap:wrap;gap:5px}
+.hset{background:var(--s2);border-radius:6px;padding:4px 9px;font-size:12px;font-family:'DM Mono',monospace}
+.hset.on{border:1px solid #2a3a1a;color:#7ab85a}
+.empty{text-align:center;padding:50px 20px;color:var(--mu);font-size:14px}
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--bd);display:flex;height:62px}
+.btab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;color:var(--mu);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500}
+.btab.on{color:var(--ac)}
+.btab svg{width:22px;height:22px}
+/* TOAST */
+.toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--ac);color:#000;font-weight:600;font-size:13px;padding:9px 18px;border-radius:100px;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;z-index:200}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<nav class="nav"><span class="logo">IRON LOG</span></nav>
+
+<div id="pg-new" class="page active">
+  <div style="margin-bottom:14px">
+    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1px;color:var(--ac)">NEW SESSION</h2>
+    <p style="color:var(--mu);font-size:13px;margin-top:3px">Paste your ChatGPT workout below</p>
+  </div>
+  <textarea id="txt" placeholder="Paste your workout here..."></textarea>
+  <button class="btn btn-y" onclick="parseWorkout()">PARSE WORKOUT ▶</button>
+  <div class="preview" id="preview">
+    <div class="preview-hd">Detected exercises</div>
+    <div id="prev-list"></div>
+    <div style="padding:10px 14px">
+      <button class="btn btn-y" onclick="startWorkout()" style="margin-top:0">START SESSION ▶</button>
+    </div>
+  </div>
+</div>
+
+<div id="pg-workout" class="page">
+  <div class="wk-hd">
+    <div class="wk-title" id="wk-title">WORKOUT</div>
+    <div class="wk-sub" id="wk-sub"></div>
+    <div class="prog-wrap"><div class="prog-bar" id="prog" style="width:0%"></div></div>
+  </div>
+  <div id="wk-content"></div>
+  <button class="btn btn-y" style="margin-top:16px" onclick="finishWorkout()">FINISH SESSION ✓</button>
+</div>
+
+<div id="pg-history" class="page">
+  <div class="hist-hd"><h2>HISTORY</h2></div>
+  <div id="hist-list"></div>
+</div>
+
+<nav class="bnav">
+  <button class="btab on" id="tab-new" onclick="showPage('new')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M5 4h2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+    New
+  </button>
+  <button class="btab" id="tab-workout" onclick="showPage('workout')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M3 8h4M17 8h4M3 16h4M17 16h4"/></svg>
+    Workout
+  </button>
+  <button class="btab" id="tab-history" onclick="showPage('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    History
+  </button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+var cw = null;
+var wh = [];
+try { wh = JSON.parse(localStorage.getItem('ironlog_v2') || '[]'); } catch(e) { wh = []; }
+
+// ── PARSER ──
+function parseWorkout() {
+  var txt = document.getElementById('txt').value.trim();
+  if (!txt) { toast('Paste a workout first!'); return; }
+  var lines = txt.split('\n');
+  var exercises = [];
+  var warmup = [];
+  var finishers = [];
+  var current = null;
+  var inWU = false;       // top-level warmup section
+  var inWUProg = false;   // warmup progression inside exercise
+  var inSub = false;      // substitution block
+  var inFin = false;      // finisher section
+  var finCurrent = null;
+
+  for (var i = 0; i < lines.length; i++) {
+    var l = lines[i].trim();
+    if (!l) continue;
+
+    // Top-level warmup section (only matches "Warm-up (" style)
+    if (/^warm[\s-]?up\s*\(/i.test(l)) { inWU = true; inFin = false; continue; }
+
+    // Numbered exercise header
+    if (/^[1-9]/.test(l) && l.indexOf('\u20E3') !== -1) {
+      if (current) exercises.push(current);
+      if (finCurrent) { finishers.push(finCurrent); finCurrent = null; }
+      inWU = false; inWUProg = false; inSub = false; inFin = false;
+      var nm = l.replace(/^[1-9][0-9]?\uFE0F\u20E3\s*/,'').replace(/\(Primary[^)]*\)/gi,'').replace(/\([^)]*\)/g,'').trim();
+      current = { name: nm, sets: 4, reps: '8-10', weight: '', warmup: [], topset: null, backoff: null, notes: '' };
+      continue;
+    }
+
+    // Finisher section headers
+    if (/^(conditioning|optional finisher|breathing|grip\s*\(optional\))/i.test(l)) {
+      if (current) { exercises.push(current); current = null; }
+      if (finCurrent) finishers.push(finCurrent);
+      finCurrent = { title: l, lines: [] };
+      inFin = true; inWU = false; continue;
+    }
+
+    // Stop at notes/key instruction sections
+    if (/^(notes for today|key instruction|intent$)/i.test(l)) {
+      if (current) { exercises.push(current); current = null; }
+      if (finCurrent) { finishers.push(finCurrent); finCurrent = null; }
+      inFin = false; inWU = false; continue;
+    }
+
+    // Collect finisher lines
+    if (inFin && finCurrent) { finCurrent.lines.push(l); continue; }
+
+    // Collect top-level warmup lines
+    if (inWU) {
+      if (l.length > 3 && !/^\d+[\s-]\d+\s*min/i.test(l)) warmup.push(l.replace(/^[-*•]\s*/,''));
+      continue;
+    }
+
+    if (!current) continue;
+
+    // Skip substitution blocks
+    if (/^\u2757|^substitute/i.test(l)) { inSub = true; continue; }
+    if (inSub) {
+      if (/^strict cues|^working sets|^top set|^back.off|^only if pain/i.test(l)) inSub = false;
+      else continue;
+    }
+
+    // Section markers inside exercise
+    if (/^warm[\s-]?up:?$/i.test(l) || /^warm[\s-]?up progression/i.test(l)) { inWUProg = true; continue; }
+    if (/^neural primer/i.test(l)) { inWUProg = false; continue; }
+    if (/^working sets?:?$/i.test(l)) { inWUProg = false; continue; }
+    if (/^strict cues/i.test(l)) { continue; }
+
+    // Neural primer set (skip from working sets)
+    if (/@\s*\+?[\d.]+\s*kg/.test(l) && /^\d+\s*[x\xD7]\s*\d+/i.test(l)) continue;
+
+    // Warmup progression sets
+    if (inWUProg) {
+      if (/^bodyweight/i.test(l)) {
+        var r = l.match(/[x\xD7]\s*(\d+)/i);
+        current.warmup.push({ w: 'BW', r: r ? r[1] : '5' });
+      } else if (/^[\+\d]/.test(l) && /[x\xD7]/.test(l)) {
+        var wm = l.match(/\+?([\d.]+)/);
+        var rm = l.match(/[x\xD7]\s*(\d+)/i);
+        if (wm && rm) current.warmup.push({ w: wm[1], r: rm[1] });
+      }
+      continue;
+    }
+
+    // Top set
+    if (/^top set:/i.test(l)) {
+      var tw = l.match(/\+?([\d.]+)\s*kg/);
+      var tr = l.match(/[x\xD7]\s*([\d\u2013\-]+)/i);
+      current.topset = { w: tw ? tw[1] : '', r: tr ? tr[1] : '1' };
+      continue;
+    }
+
+    // Back-off
+    if (/^back[\s-]?off:/i.test(l)) {
+      var bc = l.match(/(\d+)\s*[x\xD7]/i);
+      var br = l.match(/[x\xD7]\s*(\d+)/i);
+      var bw = l.match(/@\s*\+?([\d.]+)\s*kg/);
+      current.backoff = { n: bc ? parseInt(bc[1]) : 3, r: br ? br[1] : '5', w: bw ? bw[1] : '' };
+      continue;
+    }
+
+    // Standard N sets x reps
+    var sm = l.match(/^(\d+)\s*sets?\s*[x\xD7]\s*([\d\u2013\-]+)/i);
+    if (sm && !current.topset) {
+      current.sets = parseInt(sm[1]);
+      current.reps = sm[2];
+      continue;
+    }
+
+    // Suggested weight
+    if (/suggested load|suggested weight/i.test(l)) {
+      var nl = lines[i+1] ? lines[i+1].trim() : '';
+      var sw = (l + ' ' + nl).match(/\+?([\d.]+)\s*(?:[\u2013\-][\d.]+)?\s*kg/);
+      if (sw) current.weight = sw[1];
+      continue;
+    }
+    if (/^[\d.]+\s*[\u2013\-]\s*[\d.]+\s*kg$/.test(l) || /^\+?[\d.]+\s*kg$/.test(l)) {
+      var sw2 = l.match(/([\d.]+)/);
+      if (sw2 && !current.weight) current.weight = sw2[1];
+    }
+  }
+  if (current) exercises.push(current);
+  if (finCurrent) finishers.push(finCurrent);
+
+  if (!exercises.length) { toast('No exercises found — check format'); return; }
+
+  // Get history suggestions
+  exercises.forEach(function(ex) { ex.histSug = getLastWeight(ex.name); });
+
+  // Get title
+  var title = 'WORKOUT';
+  var sub = '';
+  lines.forEach(function(l) {
+    l = l.trim();
+    if (/day\s*\d/i.test(l) && title === 'WORKOUT') title = l.replace(/^[\u2014\-\u2013]+/,'').trim().toUpperCase();
+    if (/week\s*\d/i.test(l) || /^target:/i.test(l)) sub += l + '  ';
+  });
+
+  cw = { title: title, sub: sub.trim(), warmup: warmup, exercises: exercises, finishers: finishers };
+
+  // Preview
+  var html = '';
+  exercises.forEach(function(ex, i) {
+    var w = ex.topset ? ex.topset.w : ex.weight;
+    html += '<div class="prev-ex"><span class="prev-n">' + (i+1) + '</span><span class="prev-name">' + ex.name + '</span><span class="prev-meta">' + (ex.topset ? '1+' + (ex.backoff ? ex.backoff.n : 0) + ' sets' : ex.sets + ' sets') + (w ? ' · ' + w + 'kg' : '') + '</span></div>';
+  });
+  document.getElementById('prev-list').innerHTML = html;
+  document.getElementById('preview').style.display = 'block';
+  toast('Found ' + exercises.length + ' exercises!');
+}
+
+// ── HISTORY WEIGHT ──
+function getLastWeight(name) {
+  var n1 = name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  for (var i = wh.length - 1; i >= 0; i--) {
+    for (var j = 0; j < wh[i].exercises.length; j++) {
+      var ex = wh[i].exercises[j];
+      if (ex.name.toLowerCase().replace(/[^a-z0-9]/g,'') === n1) {
+        var done = ex.sets.filter(function(s){ return s.done && s.w; });
+        if (done.length) {
+          var max = Math.max.apply(null, done.map(function(s){ return parseFloat(s.w); }));
+          return { w: max, date: wh[i].date };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function bestWeight(ex) {
+  if (ex.histSug) return (ex.histSug.w + 2.5).toFixed(1);
+  if (ex.topset && ex.topset.w) return ex.topset.w;
+  if (ex.weight) return ex.weight;
+  return '';
+}
+
+// ── RENDER WORKOUT ──
+function startWorkout() { if (!cw) return; renderWorkout(); showPage('workout'); }
+
+function renderWorkout() {
+  document.getElementById('wk-title').textContent = cw.title;
+  document.getElementById('wk-sub').textContent = cw.sub;
+  var html = '';
+
+  // Warmup
+  if (cw.warmup.length) {
+    html += '<div style="margin-bottom:10px"><div class="wu-hd">&#9889; Warm-up</div>';
+    cw.warmup.forEach(function(w, i) {
+      html += '<div class="wu-item"><button class="wu-chk" onclick="this.classList.toggle(\'on\')"></button><span>' + w + '</span></div>';
+    });
+    html += '</div>';
+  }
+
+  // Exercises
+  cw.exercises.forEach(function(ex, ei) {
+    var bw = bestWeight(ex);
+    var histLine = ex.histSug
+      ? '<div class="card-hist">&#8593; Last: ' + ex.histSug.w + 'kg &middot; Try ' + bw + 'kg</div>'
+      : (bw ? '<div class="card-sug">Suggested: ' + bw + 'kg</div>' : '');
+
+    // Count total working sets
+    var totalSets = ex.topset ? (1 + (ex.backoff ? ex.backoff.n : 0)) : ex.sets;
+
+    var rows = '';
+    var si = 0;
+
+    // Warmup rows
+    if (ex.warmup.length) {
+      rows += '<tr><td colspan="4" class="sec-lbl">Warm-up</td></tr>';
+      ex.warmup.forEach(function(ws, wi) {
+        rows += '<tr class="srow"><td class="slbl">W' + (wi+1) + '</td><td class="starget">' + ws.w + (ws.w !== 'BW' ? 'kg' : '') + ' &times;' + ws.r + '</td><td><input class="winput" type="number" step="0.5" placeholder="' + (ws.w !== 'BW' ? ws.w : '0') + '" style="width:68px"></td><td class="chkcol"><button class="chk" onclick="toggleChk(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button></td></tr>';
+      });
+    }
+
+    // Working sets
+    rows += '<tr><td colspan="4" class="sec-lbl">Working sets</td></tr>';
+
+    if (ex.topset) {
+      rows += '<tr class="srow" data-ei="' + ei + '" data-si="' + si + '"><td class="slbl">TOP</td><td class="starget">' + ex.topset.r + ' reps</td><td><input class="winput" type="number" step="0.5" placeholder="' + (ex.topset.w || bw || '') + '" data-ei="' + ei + '" data-si="' + si + '"><span class="wunit">kg</span></td><td class="chkcol"><button class="chk" data-ei="' + ei + '" data-si="' + si + '" onclick="toggleChk(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button></td></tr>';
+      si++;
+      if (ex.backoff) {
+        for (var b = 0; b < ex.backoff.n; b++) {
+          rows += '<tr class="srow" data-ei="' + ei + '" data-si="' + si + '"><td class="slbl">BO' + (b+1) + '</td><td class="starget">' + ex.backoff.r + ' reps</td><td><input class="winput" type="number" step="0.5" placeholder="' + (ex.backoff.w || '') + '" data-ei="' + ei + '" data-si="' + si + '"><span class="wunit">kg</span></td><td class="chkcol"><button class="chk" data-ei="' + ei + '" data-si="' + si + '" onclick="toggleChk(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button></td></tr>';
+          si++;
+        }
+      }
+    } else {
+      for (var s = 0; s < ex.sets; s++) {
+        rows += '<tr class="srow" data-ei="' + ei + '" data-si="' + si + '"><td class="slbl">S' + (s+1) + '</td><td class="starget">' + ex.reps + ' reps</td><td><input class="winput" type="number" step="0.5" placeholder="' + (bw || '') + '" data-ei="' + ei + '" data-si="' + si + '"><span class="wunit">kg</span></td><td class="chkcol"><button class="chk" data-ei="' + ei + '" data-si="' + si + '" onclick="toggleChk(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button></td></tr>';
+        si++;
+      }
+    }
+
+    html += '<div class="card" id="ec' + ei + '"><div class="card-hd" onclick="toggleCard(\'ec' + ei + '\')"><span class="card-num">' + (ei+1) + '</span><div class="card-info"><div class="card-name">' + ex.name + '</div><div class="card-meta">' + totalSets + ' working sets &middot; ' + (ex.topset ? ex.topset.r : ex.reps) + ' reps</div>' + histLine + '</div><span class="chevron">&#8964;</span></div><div class="card-body"><table class="stbl"><thead><tr><th>Set</th><th>Target</th><th>Weight</th><th style="text-align:center">Done</th></tr></thead><tbody id="tb' + ei + '">' + rows + '</tbody></table></div></div>';
+  });
+
+  // Finishers
+  if (cw.finishers.length) {
+    html += '<div class="wu-hd" style="margin-top:8px">&#127937; Finishers</div>';
+    cw.finishers.forEach(function(fin, fi) {
+      var details = fin.lines.filter(function(l){ return l.length > 2; }).join(' &middot; ');
+      html += '<div class="card" id="fc' + fi + '"><div class="card-hd" onclick="toggleCard(\'fc' + fi + '\')"><span class="fin-star">&#9733;</span><div class="card-info"><div class="card-name">' + fin.title + '</div><div class="card-meta">tap to expand</div></div><span class="chevron">&#8964;</span></div><div class="card-body"><div class="notes" style="margin-bottom:10px">' + (details || 'See workout notes') + '</div><div style="display:flex;align-items:center;gap:10px;padding:4px 0"><button class="wu-chk" onclick="this.classList.toggle(\'on\')"></button><span style="font-size:13px;color:var(--mu)">Mark as done</span></div></div></div>';
+    });
+  }
+
+  document.getElementById('wk-content').innerHTML = html;
+  updateProg();
+  setTimeout(function(){ toggleCard('ec0'); }, 80);
+}
+
+function toggleCard(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+function toggleChk(btn) {
+  btn.classList.toggle('on');
+  var row = btn.closest('.srow');
+  if (row) row.classList.toggle('done');
+  updateProg();
+  updateCardDone();
+}
+
+function updateCardDone() {
+  var cards = document.querySelectorAll('.card[id^="ec"]');
+  for (var i = 0; i < cards.length; i++) {
+    var chks = cards[i].querySelectorAll('tbody .srow[data-ei] .chk');
+    if (!chks.length) continue;
+    var allOn = true;
+    for (var j = 0; j < chks.length; j++) { if (!chks[j].classList.contains('on')) { allOn = false; break; } }
+    if (allOn) cards[i].classList.add('done'); else cards[i].classList.remove('done');
+  }
+}
+
+function updateProg() {
+  var all = document.querySelectorAll('tbody .srow[data-ei] .chk');
+  var done = document.querySelectorAll('tbody .srow[data-ei] .chk.on');
+  var pct = all.length ? Math.round(done.length / all.length * 100) : 0;
+  document.getElementById('prog').style.width = pct + '%';
+}
+
+// ── FINISH ──
+function finishWorkout() {
+  if (!cw) return;
+  var exData = cw.exercises.map(function(ex, ei) {
+    var tbody = document.getElementById('tb' + ei);
+    var rows = tbody ? tbody.querySelectorAll('.srow[data-ei]') : [];
+    var sets = [];
+    for (var i = 0; i < rows.length; i++) {
+      var inp = rows[i].querySelector('.winput');
+      var chk = rows[i].querySelector('.chk');
+      sets.push({ w: inp ? inp.value : '', done: chk ? chk.classList.contains('on') : false });
+    }
+    return { name: ex.name, sets: sets };
+  });
+
+  wh.unshift({
+    id: Date.now(),
+    date: new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }),
+    title: cw.title,
+    exercises: exData
+  });
+
+  try { localStorage.setItem('ironlog_v2', JSON.stringify(wh)); } catch(e) {}
+  toast('Session saved! \uD83D\uDCAA');
+  showPage('history');
+  renderHistory();
+}
+
+// ── HISTORY ──
+function renderHistory() {
+  var el = document.getElementById('hist-list');
+  if (!wh.length) { el.innerHTML = '<div class="empty">No sessions yet.<br>Paste a workout to get started.</div>'; return; }
+  var html = '';
+  wh.forEach(function(s, si) {
+    var exHtml = '';
+    s.exercises.forEach(function(ex) {
+      var done = ex.sets.filter(function(s){ return s.done; });
+      var setsHtml = ex.sets.map(function(set, i){
+        return '<span class="hset ' + (set.done ? 'on' : '') + '">' + (set.w ? 'S'+(i+1)+': '+set.w+'kg' : 'S'+(i+1)) + '</span>';
+      }).join('');
+      exHtml += '<div class="hex"><div class="hex-name">' + ex.name + ' <span style="color:var(--mu);font-size:11px">' + done.length + '/' + ex.sets.length + ' sets</span></div><div class="hsets">' + setsHtml + '</div></div>';
+    });
+    html += '<div class="sess" id="ss' + si + '"><div class="sess-hd" onclick="document.getElementById(\'ss' + si + '\').classList.toggle(\'open\')"><div><div class="sess-title">' + s.title + '</div><div class="sess-date">' + s.date + '</div></div><span class="sess-badge">' + s.exercises.length + ' exercises</span></div><div class="sess-body">' + exHtml + '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+// ── NAV ──
+function showPage(name) {
+  var pages = ['new','workout','history'];
+  pages.forEach(function(p) {
+    document.getElementById('pg-' + p).classList.remove('active');
+    document.getElementById('tab-' + p).classList.remove('on');
+  });
+  document.getElementById('pg-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('on');
+  if (name === 'history') renderHistory();
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  setTimeout(function(){ t.classList.remove('on'); }, 2500);
+}
+
+renderHistory();
+</script>
+</body>
+</html>
